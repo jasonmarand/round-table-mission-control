@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
   --background: #0a0a0a;
@@ -28,4 +29,145 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* Markdown prose overrides */
+.prose h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #333;
+}
+
+.prose h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #d1d5db;
+  margin-top: 1.25rem;
+  margin-bottom: 0.4rem;
+}
+
+.prose p {
+  color: #9ca3af;
+  line-height: 1.7;
+  margin-bottom: 0.75rem;
+}
+
+.prose strong {
+  color: #f3f4f6;
+}
+
+.prose em {
+  color: #a78bfa;
+  font-style: italic;
+}
+
+.prose ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose li {
+  color: #9ca3af;
+  line-height: 1.7;
+  margin-bottom: 0.25rem;
+}
+
+.prose li strong {
+  color: #e5e7eb;
+}
+
+.prose code:not(pre code) {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.8rem;
+  color: #c4b5fd;
+  font-family: "SF Mono", "Fira Code", "Fira Mono", monospace;
+}
+
+.prose pre {
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.prose pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+  color: #d1d5db;
+  font-family: "SF Mono", "Fira Code", "Fira Mono", monospace;
+  line-height: 1.6;
+}
+
+.prose blockquote {
+  border-left: 3px solid #8b5cf6;
+  padding-left: 1rem;
+  color: #9ca3af;
+  font-style: italic;
+  margin: 1rem 0;
+}
+
+.prose a {
+  color: #a78bfa;
+  text-decoration: none;
+}
+
+.prose a:hover {
+  text-decoration: underline;
+}
+
+.prose hr {
+  border-color: #333;
+  margin: 1.5rem 0;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.prose th {
+  background: #1a1a1a;
+  color: #e5e7eb;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #333;
+}
+
+.prose td {
+  color: #9ca3af;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #2a2a2a;
+}
+
+.prose tr:nth-child(even) {
+  background: #111;
 }
