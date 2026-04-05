@@ -1,13 +1,24 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { KanbanBoard } from "@/components/kanban-board";
 import { MetricsBar } from "@/components/metrics-bar";
-import { tasks } from "@/lib/mock-data";
-import { Plus } from "lucide-react";
+import { getTasks } from "@/lib/data";
+import type { Task } from "@/lib/supabase/types";
+import { Plus, Loader2 } from "lucide-react";
 
 export default function TasksPage() {
-  const byStatus = (status: string) => tasks.filter((t) => t.status === status);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    getTasks().then((data) => {
+      setTasks(data);
+      setLoading(false);
+    });
+  }, []);
+
+  const byStatus = (status: string) => tasks.filter((t) => t.status === status);
   const inProgress = byStatus("in_progress");
   const done = byStatus("done");
   const total = tasks.length;
@@ -26,6 +37,14 @@ export default function TasksPage() {
     { label: "Total", value: total },
     { label: "Completion", value: `${completion}%`, color: "#10b981" },
   ];
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">

@@ -9,6 +9,7 @@ interface KanbanItem {
   title: string;
   description?: string | null;
   agent_id?: string | null;
+  agent?: { name: string; color: string } | null;
   project?: string | null;
   created_at?: string;
 }
@@ -31,10 +32,7 @@ export function KanbanBoard({ columns }: KanbanBoardProps) {
         <div key={column.id} className="flex-shrink-0 w-72">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: column.color }}
-              />
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: column.color }} />
               <h3 className="text-sm font-medium text-gray-300">{column.label}</h3>
               <span className="text-xs text-gray-600 bg-[#2a2a2a] px-2 py-0.5 rounded-full">
                 {column.items.length}
@@ -53,7 +51,8 @@ export function KanbanBoard({ columns }: KanbanBoardProps) {
                   key={item.id}
                   title={item.title}
                   description={item.description}
-                  agentId={item.agent_id}
+                  agentName={item.agent?.name}
+                  agentColor={item.agent?.color}
                   project={item.project}
                   timestamp={item.created_at}
                 />

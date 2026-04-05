@@ -19,7 +19,7 @@ export interface Task {
   priority: "low" | "medium" | "high" | "urgent";
   created_at: string;
   updated_at: string;
-  agent?: Agent;
+  agent?: Agent | null;
 }
 
 export interface ContentItem {
@@ -31,7 +31,7 @@ export interface ContentItem {
   agent_id: string | null;
   created_at: string;
   updated_at: string;
-  agent?: Agent;
+  agent?: Agent | null;
 }
 
 export interface ScheduledTask {
@@ -55,5 +55,5 @@ export interface MemoryEntry {
   category: string;
   metadata: Record<string, unknown>;
   created_at: string;
-  agent?: Agent;
+  agent?: Agent | null;
 }
