@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { createTask } from "@/lib/data";
-import type { Agent, Project } from "@/lib/supabase/types";
+import type { Agent, Project, Task } from "@/lib/supabase/types";
 import { X } from "lucide-react";
 
 interface NewTaskModalProps {
   agents: Agent[];
   projects: Project[];
   onClose: () => void;
-  onCreated: () => void;
+  onCreated?: (task: Task | null) => void;
 }
 
 const statuses = [
@@ -38,7 +38,7 @@ export function NewTaskModal({ agents, projects, onClose, onCreated }: NewTaskMo
   const handleSave = async () => {
     if (!title.trim()) return;
     setSaving(true);
-    await createTask({
+    const createdTask = await createTask({
       title: title.trim(),
       description: description.trim() || null,
       status: status as "backlog" | "in_progress" | "review" | "recurring",
@@ -47,7 +47,8 @@ export function NewTaskModal({ agents, projects, onClose, onCreated }: NewTaskMo
       project: project || null,
     });
     setSaving(false);
-    onCreated();
+    onCreated?.(createdTask ?? null);
+    onClose();
   };
 
   return (

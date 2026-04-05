@@ -5,6 +5,7 @@ import { KanbanBoard } from "@/components/kanban-board";
 import { MetricsBar } from "@/components/metrics-bar";
 import { NewTaskModal } from "@/components/new-task-modal";
 import { getTasks, getAgents, getProjects, updateTask } from "@/lib/data";
+import { notifyAgent } from "@/lib/agent-dispatch";
 import type { Task, Agent, Project } from "@/lib/supabase/types";
 import { Plus, Loader2 } from "lucide-react";
 
@@ -57,6 +58,36 @@ export default function TasksPage() {
     { label: "Completion", value: `${completion}%`, color: "#10b981" },
   ];
 
+  const handleTaskCreated = useCallback(
+    async (task: Task | null) => {
+      if (!task) {
+        await loadData();
+        return;
+      }
+
+      const agent = task.agent_id
+        ? task.agent ?? agents.find((a) => a.id === task.agent_id) ?? null
+        : null;
+      const withAgent = { ...task, agent };
+
+      setTasks((prev) => [withAgent, ...prev]);
+
+      if (withAgent.agent_id) {
+        const acknowledged = await notifyAgent(withAgent);
+        if (acknowledged) {
+          const nextStatus: Task["status"] = withAgent.status === "backlog" ? "in_progress" : withAgent.status;
+          setTasks((prev) =>
+            prev.map((t) => (t.id === withAgent.id ? { ...t, status: nextStatus } : t))
+          );
+          if (nextStatus !== withAgent.status) {
+            await updateTask(withAgent.id, { status: nextStatus });
+          }
+        }
+      }
+    },
+    [agents, loadData]
+  );
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -91,10 +122,7 @@ export default function TasksPage() {
           agents={agents}
           projects={projects}
           onClose={() => setShowNewModal(false)}
-          onCreated={() => {
-            setShowNewModal(false);
-            loadData();
-          }}
+          onCreated={handleTaskCreated}
         />
       )}
     </div>
