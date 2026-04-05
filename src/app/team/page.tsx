@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getAgents } from "@/lib/data";
 import type { Agent } from "@/lib/supabase/types";
 import { AgentBadge } from "@/components/agent-badge";
 import { Loader2 } from "lucide-react";
 
 export default function TeamPage() {
+  const router = useRouter();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +38,10 @@ export default function TeamPage() {
       </div>
 
       {arthur && (
-        <div className="mb-8 p-6 rounded-xl bg-gradient-to-r from-amber-500/10 to-amber-500/5 border border-amber-500/20">
+        <div
+          onClick={() => router.push(`/team/${arthur.name}`)}
+          className="mb-8 p-6 rounded-xl bg-gradient-to-r from-amber-500/10 to-amber-500/5 border border-amber-500/20 cursor-pointer hover:border-amber-500/40 transition-colors"
+        >
           <div className="flex items-start gap-4">
             <AgentBadge name="Arthur" color="#f59e0b" size="lg" />
             <div>
@@ -52,6 +57,7 @@ export default function TeamPage() {
         {others.map((agent) => (
           <div
             key={agent.id}
+            onClick={() => router.push(`/team/${agent.name}`)}
             className="p-4 rounded-xl bg-[#1a1a1a] border border-[#222] hover:border-[#444] transition-all cursor-pointer group"
             style={{ borderTopColor: agent.color, borderTopWidth: "2px" }}
           >
