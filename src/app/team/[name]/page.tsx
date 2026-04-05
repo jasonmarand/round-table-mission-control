@@ -362,12 +362,133 @@ export default function AgentDetailPage() {
 function SkillsTab({ agentName }: { agentName: string }) {
   const skills = agentSkillsMap[agentName] || [];
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [viewingSkill, setViewingSkill] = useState<AgentSkill | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const installed = skills.filter((s) => s.source === "installed");
   const custom = skills.filter((s) => s.source === "custom");
   const enabledCount = skills.filter((s) => s.enabled).length;
 
+  function handleViewSkillMd(skill: AgentSkill) {
+    if (isEditing) {
+      setIsEditing(false);
+      setEditContent("");
+    }
+    setViewingSkill(skill);
+    setExpanded(null);
+  }
+
+  function handleEdit() {
+    if (viewingSkill) {
+      setEditContent(viewingSkill.skillMd);
+      setIsEditing(true);
+      setTimeout(() => textareaRef.current?.focus(), 50);
+    }
+  }
+
+  function handleCancel() {
+    setIsEditing(false);
+    setEditContent("");
+  }
+
+  function handleSave() {
+    if (viewingSkill) {
+      viewingSkill.skillMd = editContent;
+      setIsEditing(false);
+      setEditContent("");
+    }
+  }
+
+  function handleBack() {
+    setViewingSkill(null);
+    setIsEditing(false);
+    setEditContent("");
+  }
+
+  // ── Viewing a single SKILL.md ──
+  if (viewingSkill) {
+    return (
+      <div className="h-full flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#222]">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleBack}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#1a1a1a] transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <h3 className="text-base font-medium text-white">
+                {viewingSkill.name}/SKILL.md
+              </h3>
+              <p className="text-xs text-gray-600">markdown file</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#1a1a1a] border border-[#333] text-gray-500">
+              v{viewingSkill.version}
+            </span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+              viewingSkill.enabled
+                ? "bg-emerald-500/20 text-emerald-300"
+                : "bg-gray-500/20 text-gray-400"
+            }`}>
+              {viewingSkill.enabled ? "Enabled" : "Disabled"}
+            </span>
+            {!isEditing && (
+              <button
+                onClick={handleEdit}
+                className="px-3 py-1.5 rounded-lg bg-[#1a1a1a] border border-[#333] text-sm text-gray-400 hover:text-white hover:border-[#555] transition-colors"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Content */}
+        {isEditing ? (
+          <div className="flex-1 flex flex-col min-h-0">
+            <textarea
+              ref={textareaRef}
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="flex-1 w-full bg-[#111] border border-[#333] rounded-lg p-4 text-sm text-gray-200 font-mono leading-relaxed resize-none focus:outline-none focus:border-purple-500/50 placeholder-gray-600"
+              spellCheck={false}
+            />
+            {/* Sticky Cancel/Save bar */}
+            <div className="sticky bottom-0 flex items-center justify-end gap-3 py-3 mt-3 border-t border-[#222] bg-[#0a0a0a]">
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 rounded-lg bg-[#1a1a1a] border border-[#333] text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 rounded-lg bg-white text-black text-sm font-medium hover:bg-gray-200 transition-colors"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
+            onClick={handleEdit}
+            className="flex-1 overflow-auto cursor-text prose prose-invert prose-sm max-w-none prose-headings:text-white prose-p:text-gray-300 prose-li:text-gray-300 prose-strong:text-white prose-code:text-purple-300 prose-code:bg-[#1a1a1a] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-pre:bg-[#1a1a1a] prose-pre:border prose-pre:border-[#333] prose-blockquote:border-l-purple-500 prose-blockquote:text-gray-400 prose-a:text-purple-400 prose-hr:border-[#333]"
+          >
+            <ReactMarkdown>{viewingSkill.skillMd}</ReactMarkdown>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Skills list view ──
   return (
     <div className="h-full flex flex-col">
       {/* Header bar */}
@@ -385,7 +506,6 @@ function SkillsTab({ agentName }: { agentName: string }) {
       </div>
 
       <div className="flex-1 overflow-auto space-y-6">
-        {/* Installed Skills */}
         {installed.length > 0 && (
           <SkillGroup
             title="Installed Skills"
@@ -393,10 +513,9 @@ function SkillsTab({ agentName }: { agentName: string }) {
             skills={installed}
             expanded={expanded}
             setExpanded={setExpanded}
+            onViewSkillMd={handleViewSkillMd}
           />
         )}
-
-        {/* Custom Skills */}
         {custom.length > 0 && (
           <SkillGroup
             title="Custom Skills"
@@ -404,6 +523,7 @@ function SkillsTab({ agentName }: { agentName: string }) {
             skills={custom}
             expanded={expanded}
             setExpanded={setExpanded}
+            onViewSkillMd={handleViewSkillMd}
           />
         )}
       </div>
@@ -428,7 +548,6 @@ function SkillsTab({ agentName }: { agentName: string }) {
         </div>
       </div>
 
-      {/* Add Skill Modal */}
       {showAddModal && (
         <AddSkillModal onClose={() => setShowAddModal(false)} />
       )}
@@ -442,12 +561,14 @@ function SkillGroup({
   skills,
   expanded,
   setExpanded,
+  onViewSkillMd,
 }: {
   title: string;
   badge: string;
   skills: AgentSkill[];
   expanded: string | null;
   setExpanded: (id: string | null) => void;
+  onViewSkillMd: (skill: AgentSkill) => void;
 }) {
   return (
     <div>
@@ -458,18 +579,18 @@ function SkillGroup({
         <span className="text-[10px] text-gray-600">{badge} skills</span>
       </div>
       <div className="border border-[#2a2a2a] rounded-xl overflow-hidden divide-y divide-[#222]">
-        {skills.map((skill) => (
-          <div key={skill.id}>
+        {skills.map((sk) => (
+          <div key={sk.id}>
             <div
               className="flex items-center justify-between px-4 py-3 hover:bg-[#111] transition-colors cursor-pointer"
-              onClick={() => setExpanded(expanded === skill.id ? null : skill.id)}
+              onClick={() => setExpanded(expanded === sk.id ? null : sk.id)}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`w-2 h-2 rounded-full shrink-0 ${
-                  skill.enabled ? "bg-emerald-400" : "bg-gray-600"
+                  sk.enabled ? "bg-emerald-400" : "bg-gray-600"
                 }`} />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{skill.name}</p>
+                  <p className="text-sm font-medium text-white truncate">{sk.name}</p>
                   <p className="text-xs text-gray-500 truncate mt-0.5">
                     Will be linked into the effective agent skills directory on the next run.
                   </p>
@@ -477,12 +598,12 @@ function SkillGroup({
               </div>
               <div className="flex items-center gap-3 shrink-0 ml-4">
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#1a1a1a] border border-[#333] text-gray-500">
-                  v{skill.version}
+                  v{sk.version}
                 </span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setExpanded(expanded === skill.id ? null : skill.id);
+                    onViewSkillMd(sk);
                   }}
                   className="text-sm text-gray-500 hover:text-purple-400 transition-colors"
                 >
@@ -492,35 +613,41 @@ function SkillGroup({
             </div>
 
             {/* Expanded detail */}
-            {expanded === skill.id && (
+            {expanded === sk.id && (
               <div className="px-4 pb-4 bg-[#111] border-t border-[#1a1a1a]">
                 <div className="pt-3 space-y-3">
                   <div>
                     <span className="text-[10px] uppercase tracking-wider text-gray-600">Description</span>
-                    <p className="text-sm text-gray-300 mt-1 leading-relaxed">{skill.description}</p>
+                    <p className="text-sm text-gray-300 mt-1 leading-relaxed">{sk.description}</p>
                   </div>
                   <div className="flex items-center gap-6">
                     <div>
                       <span className="text-[10px] uppercase tracking-wider text-gray-600">Source</span>
-                      <p className="text-sm text-gray-300 mt-1 capitalize">{skill.source}</p>
+                      <p className="text-sm text-gray-300 mt-1 capitalize">{sk.source}</p>
                     </div>
                     <div>
                       <span className="text-[10px] uppercase tracking-wider text-gray-600">Version</span>
-                      <p className="text-sm text-gray-300 mt-1">{skill.version}</p>
+                      <p className="text-sm text-gray-300 mt-1">{sk.version}</p>
                     </div>
                     <div>
                       <span className="text-[10px] uppercase tracking-wider text-gray-600">Status</span>
-                      <p className={`text-sm mt-1 ${skill.enabled ? "text-emerald-400" : "text-gray-500"}`}>
-                        {skill.enabled ? "Enabled" : "Disabled"}
+                      <p className={`text-sm mt-1 ${sk.enabled ? "text-emerald-400" : "text-gray-500"}`}>
+                        {sk.enabled ? "Enabled" : "Disabled"}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 pt-2">
-                    <button className="px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs hover:bg-purple-500/30 transition-colors">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewSkillMd(sk);
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs hover:bg-purple-500/30 transition-colors"
+                    >
                       View SKILL.md
                     </button>
                     <button className="px-3 py-1.5 rounded-lg bg-[#1a1a1a] border border-[#333] text-gray-400 text-xs hover:text-white transition-colors">
-                      {skill.enabled ? "Disable" : "Enable"}
+                      {sk.enabled ? "Disable" : "Enable"}
                     </button>
                     <button className="px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs hover:bg-rose-500/20 transition-colors ml-auto">
                       Remove
