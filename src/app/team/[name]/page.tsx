@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getAgents } from "@/lib/data";
 import { agentFilesMap, type AgentFile } from "@/lib/agent-files";
@@ -41,15 +41,19 @@ export default function AgentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>("instructions");
   const [selectedFile, setSelectedFile] = useState<AgentFile | null>(null);
+  const [fileOverrides, setFileOverrides] = useState<Record<string, string>>({});
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const files = agentFilesMap[agentName] || [];
+  const files = useMemo(() => agentFilesMap[agentName] || [], [agentName]);
+  const selectedFileContent = selectedFile
+    ? fileOverrides[selectedFile.name] ?? selectedFile.content
+    : "";
 
   function handleEdit() {
     if (selectedFile) {
-      setEditContent(selectedFile.content);
+      setEditContent(selectedFileContent);
       setIsEditing(true);
       // Focus textarea after render
       setTimeout(() => textareaRef.current?.focus(), 50);
@@ -63,8 +67,10 @@ export default function AgentDetailPage() {
 
   function handleSave() {
     if (selectedFile) {
-      // Update local mock data (in production this writes to Supabase / filesystem)
-      selectedFile.content = editContent;
+      setFileOverrides((prev) => ({
+        ...prev,
+        [selectedFile.name]: editContent,
+      }));
       setIsEditing(false);
       setEditContent("");
     }
@@ -254,7 +260,7 @@ export default function AgentDetailPage() {
                       onClick={handleEdit}
                       className="flex-1 cursor-text prose prose-invert prose-sm max-w-none prose-headings:text-white prose-p:text-gray-300 prose-li:text-gray-300 prose-strong:text-white prose-code:text-purple-300 prose-code:bg-[#1a1a1a] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-pre:bg-[#1a1a1a] prose-pre:border prose-pre:border-[#333] prose-blockquote:border-l-purple-500 prose-blockquote:text-gray-400 prose-a:text-purple-400 prose-hr:border-[#333]"
                     >
-                      <ReactMarkdown>{selectedFile.content}</ReactMarkdown>
+                      <ReactMarkdown>{selectedFileContent}</ReactMarkdown>
                     </div>
                   )}
                 </div>
@@ -362,7 +368,8 @@ export default function AgentDetailPage() {
 function SkillsTab({ agentName }: { agentName: string }) {
   const skills = agentSkillsMap[agentName] || [];
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [viewingSkill, setViewingSkill] = useState<AgentSkill | null>(null);
+  const [viewingSkillId, setViewingSkillId] = useState<string | null>(null);
+  const [skillOverrides, setSkillOverrides] = useState<Record<string, string>>({});
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -371,19 +378,25 @@ function SkillsTab({ agentName }: { agentName: string }) {
   const installed = skills.filter((s) => s.source === "installed");
   const custom = skills.filter((s) => s.source === "custom");
   const enabledCount = skills.filter((s) => s.enabled).length;
+  const viewingSkill = viewingSkillId
+    ? skills.find((s) => s.id === viewingSkillId) ?? null
+    : null;
+  const viewingSkillContent = viewingSkill
+    ? skillOverrides[viewingSkill.id] ?? viewingSkill.skillMd
+    : "";
 
   function handleViewSkillMd(skill: AgentSkill) {
     if (isEditing) {
       setIsEditing(false);
       setEditContent("");
     }
-    setViewingSkill(skill);
+    setViewingSkillId(skill.id);
     setExpanded(null);
   }
 
   function handleEdit() {
     if (viewingSkill) {
-      setEditContent(viewingSkill.skillMd);
+      setEditContent(viewingSkillContent);
       setIsEditing(true);
       setTimeout(() => textareaRef.current?.focus(), 50);
     }
@@ -396,14 +409,17 @@ function SkillsTab({ agentName }: { agentName: string }) {
 
   function handleSave() {
     if (viewingSkill) {
-      viewingSkill.skillMd = editContent;
+      setSkillOverrides((prev) => ({
+        ...prev,
+        [viewingSkill.id]: editContent,
+      }));
       setIsEditing(false);
       setEditContent("");
     }
   }
 
   function handleBack() {
-    setViewingSkill(null);
+    setViewingSkillId(null);
     setIsEditing(false);
     setEditContent("");
   }
@@ -481,7 +497,7 @@ function SkillsTab({ agentName }: { agentName: string }) {
             onClick={handleEdit}
             className="flex-1 overflow-auto cursor-text prose prose-invert prose-sm max-w-none prose-headings:text-white prose-p:text-gray-300 prose-li:text-gray-300 prose-strong:text-white prose-code:text-purple-300 prose-code:bg-[#1a1a1a] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-pre:bg-[#1a1a1a] prose-pre:border prose-pre:border-[#333] prose-blockquote:border-l-purple-500 prose-blockquote:text-gray-400 prose-a:text-purple-400 prose-hr:border-[#333]"
           >
-            <ReactMarkdown>{viewingSkill.skillMd}</ReactMarkdown>
+            <ReactMarkdown>{viewingSkillContent}</ReactMarkdown>
           </div>
         )}
       </div>

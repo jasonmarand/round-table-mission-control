@@ -41,13 +41,35 @@ export async function getTasks(): Promise<(Task & { agent?: Agent | null })[]> {
 }
 
 export async function createTask(task: Partial<Task>): Promise<Task | null> {
-  if (!isSupabaseConfigured) return null;
+  if (!isSupabaseConfigured) {
+    const now = new Date().toISOString();
+    const newTask: Task = {
+      id: `mock-${Date.now()}`,
+      title: task.title || "Untitled Task",
+      description: task.description ?? null,
+      status: (task.status as Task["status"]) || "backlog",
+      priority: (task.priority as Task["priority"]) || "medium",
+      agent_id: task.agent_id ?? null,
+      project: task.project ?? null,
+      created_at: now,
+      updated_at: now,
+      agent: task.agent_id ? mock.agents.find((a) => a.id === task.agent_id) ?? null : null,
+    };
+    mock.tasks.unshift(newTask);
+    return newTask;
+  }
   const { data } = await supabase!.from("tasks").insert(task).select().single();
   return data;
 }
 
 export async function updateTask(id: string, updates: Partial<Task>): Promise<Task | null> {
-  if (!isSupabaseConfigured) return null;
+  if (!isSupabaseConfigured) {
+    const task = mock.tasks.find((t) => t.id === id);
+    if (!task) return null;
+    Object.assign(task, updates, { updated_at: new Date().toISOString() });
+    task.agent = task.agent_id ? mock.agents.find((a) => a.id === task.agent_id) ?? null : null;
+    return task;
+  }
   const { data } = await supabase!
     .from("tasks")
     .update({ ...updates, updated_at: new Date().toISOString() })
