@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getAgents } from "@/lib/data";
 import { agentFilesMap, type AgentFile } from "@/lib/agent-files";
@@ -40,8 +40,43 @@ export default function AgentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>("instructions");
   const [selectedFile, setSelectedFile] = useState<AgentFile | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const files = agentFilesMap[agentName] || [];
+
+  function handleEdit() {
+    if (selectedFile) {
+      setEditContent(selectedFile.content);
+      setIsEditing(true);
+      // Focus textarea after render
+      setTimeout(() => textareaRef.current?.focus(), 50);
+    }
+  }
+
+  function handleCancel() {
+    setIsEditing(false);
+    setEditContent("");
+  }
+
+  function handleSave() {
+    if (selectedFile) {
+      // Update local mock data (in production this writes to Supabase / filesystem)
+      selectedFile.content = editContent;
+      setIsEditing(false);
+      setEditContent("");
+    }
+  }
+
+  function handleFileSelect(file: AgentFile) {
+    if (isEditing) {
+      // Discard edits when switching files
+      setIsEditing(false);
+      setEditContent("");
+    }
+    setSelectedFile(file);
+  }
 
   useEffect(() => {
     getAgents().then((agents) => {
@@ -142,7 +177,7 @@ export default function AgentDetailPage() {
                 {files.map((file) => (
                   <button
                     key={file.name}
-                    onClick={() => setSelectedFile(file)}
+                    onClick={() => handleFileSelect(file)}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${
                       selectedFile?.name === file.name
                         ? "bg-[#1e1e1e] border border-[#333] text-white"
@@ -168,18 +203,59 @@ export default function AgentDetailPage() {
             </div>
 
             {/* File Content */}
-            <div className="flex-1 min-w-0 overflow-auto">
+            <div className="flex-1 min-w-0 overflow-auto relative">
               {selectedFile ? (
-                <div>
-                  <div className="mb-4 pb-3 border-b border-[#222]">
-                    <h3 className="text-base font-medium text-white">
-                      {selectedFile.name}
-                    </h3>
-                    <p className="text-xs text-gray-600">markdown file</p>
+                <div className="h-full flex flex-col">
+                  <div className="mb-4 pb-3 border-b border-[#222] flex items-center justify-between">
+                    <div>
+                      <h3 className="text-base font-medium text-white">
+                        {selectedFile.name}
+                      </h3>
+                      <p className="text-xs text-gray-600">markdown file</p>
+                    </div>
+                    {!isEditing && (
+                      <button
+                        onClick={handleEdit}
+                        className="px-3 py-1.5 rounded-lg bg-[#1a1a1a] border border-[#333] text-sm text-gray-400 hover:text-white hover:border-[#555] transition-colors"
+                      >
+                        Edit
+                      </button>
+                    )}
                   </div>
-                  <div className="prose prose-invert prose-sm max-w-none prose-headings:text-white prose-p:text-gray-300 prose-li:text-gray-300 prose-strong:text-white prose-code:text-purple-300 prose-code:bg-[#1a1a1a] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-pre:bg-[#1a1a1a] prose-pre:border prose-pre:border-[#333] prose-blockquote:border-l-purple-500 prose-blockquote:text-gray-400 prose-a:text-purple-400 prose-hr:border-[#333]">
-                    <ReactMarkdown>{selectedFile.content}</ReactMarkdown>
-                  </div>
+
+                  {isEditing ? (
+                    <div className="flex-1 flex flex-col min-h-0">
+                      <textarea
+                        ref={textareaRef}
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        className="flex-1 w-full bg-[#111] border border-[#333] rounded-lg p-4 text-sm text-gray-200 font-mono leading-relaxed resize-none focus:outline-none focus:border-purple-500/50 placeholder-gray-600"
+                        spellCheck={false}
+                      />
+                      {/* Sticky Cancel/Save bar */}
+                      <div className="sticky bottom-0 flex items-center justify-end gap-3 py-3 mt-3 border-t border-[#222] bg-[#0a0a0a]">
+                        <button
+                          onClick={handleCancel}
+                          className="px-4 py-2 rounded-lg bg-[#1a1a1a] border border-[#333] text-sm text-gray-400 hover:text-white transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSave}
+                          className="px-4 py-2 rounded-lg bg-white text-black text-sm font-medium hover:bg-gray-200 transition-colors"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={handleEdit}
+                      className="flex-1 cursor-text prose prose-invert prose-sm max-w-none prose-headings:text-white prose-p:text-gray-300 prose-li:text-gray-300 prose-strong:text-white prose-code:text-purple-300 prose-code:bg-[#1a1a1a] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-pre:bg-[#1a1a1a] prose-pre:border prose-pre:border-[#333] prose-blockquote:border-l-purple-500 prose-blockquote:text-gray-400 prose-a:text-purple-400 prose-hr:border-[#333]"
+                    >
+                      <ReactMarkdown>{selectedFile.content}</ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-500">
