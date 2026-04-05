@@ -1,4 +1,4 @@
-import type { Agent, Task, ContentItem, ScheduledTask, MemoryEntry } from "./supabase/types";
+import type { Agent, Task, ContentItem, ScheduledTask, MemoryEntry, Project } from "./supabase/types";
 
 export const agents: Agent[] = [
   { id: "a1", name: "Arthur", role: "Chief Executive Orchestrator", description: "Executive command, strategic coordination, and final decision-maker of the Round Table.", color: "#f59e0b", avatar_url: null, is_active: true, created_at: "2026-04-01T00:00:00Z" },
@@ -55,6 +55,15 @@ export const memoryEntries: MemoryEntry[] = [
   { id: "m10", agent_id: "a2", content: "Market research complete. Three revenue paths identified: (1) Productized B2B service, (2) SaaS + DFY, (3) Digital products + affiliate. SaaS model scores highest on automation leverage and defensibility.", category: "research", metadata: {}, created_at: "2026-04-03T16:00:00Z" },
   { id: "m11", agent_id: "a3", content: "Voice chat pipeline proven end-to-end. Whisper transcription + Ollama reply + Piper TTS. Issue: dual bot polling conflict. Solution: integrate into OpenClaw native plugin.", category: "build", metadata: {}, created_at: "2026-04-02T15:00:00Z" },
   { id: "m12", agent_id: "a1", content: "X API credentials configured. Bearer token authenticated. Access tokens need regeneration for write permissions — app was in read-only mode when tokens were generated.", category: "infrastructure", metadata: {}, created_at: "2026-04-01T18:00:00Z" },
+];
+
+export const projects: Project[] = [
+  { id: "p1", name: "Mission Control", slug: "mission-control", description: "Executive command dashboard for Round Table OS", status: "active", color: "#8b5cf6", owner_agent_id: "a3", health_score: 82, created_at: "2026-04-01T00:00:00Z", updated_at: "2026-04-05T12:00:00Z" },
+  { id: "p2", name: "ContentReforge", slug: "contentreforge", description: "AI content repurposing SaaS — 1 input, 6 optimized formats", status: "active", color: "#3b82f6", owner_agent_id: "a3", health_score: 91, created_at: "2026-03-30T00:00:00Z", updated_at: "2026-04-02T06:00:00Z" },
+  { id: "p3", name: "Strategy", slug: "strategy", description: "Market research, positioning, and go-to-market planning", status: "active", color: "#f59e0b", owner_agent_id: "a2", health_score: 65, created_at: "2026-04-01T00:00:00Z", updated_at: "2026-04-04T14:00:00Z" },
+  { id: "p4", name: "Marketing", slug: "marketing", description: "Cross-platform marketing campaigns and social presence", status: "active", color: "#ec4899", owner_agent_id: "a8", health_score: 45, created_at: "2026-04-03T00:00:00Z", updated_at: "2026-04-05T11:00:00Z" },
+  { id: "p5", name: "Voice", slug: "voice", description: "Local AI voice pipeline — Whisper + Ollama + Piper TTS", status: "paused", color: "#10b981", owner_agent_id: "a3", health_score: 30, created_at: "2026-03-31T00:00:00Z", updated_at: "2026-04-02T15:00:00Z" },
+  { id: "p6", name: "Operations", slug: "operations", description: "Internal ops, workflows, cadences, and automation", status: "active", color: "#06b6d4", owner_agent_id: "a4", health_score: 75, created_at: "2026-04-01T00:00:00Z", updated_at: "2026-04-05T09:00:00Z" },
 ];
 
 export function getAgentById(id: string): Agent | undefined {

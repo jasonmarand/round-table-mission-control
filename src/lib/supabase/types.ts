@@ -48,6 +48,20 @@ export interface ScheduledTask {
   created_at: string;
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  status: "active" | "paused" | "completed" | "archived";
+  color: string;
+  owner_agent_id: string | null;
+  health_score: number | null;
+  created_at: string;
+  updated_at: string;
+  owner?: Agent | null;
+}
+
 export interface MemoryEntry {
   id: string;
   agent_id: string | null;

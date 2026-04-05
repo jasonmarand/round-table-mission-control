@@ -8,6 +8,7 @@ interface KanbanItem {
   id: string;
   title: string;
   description?: string | null;
+  status?: string;
   agent_id?: string | null;
   agent?: { name: string; color: string } | null;
   project?: string | null;
@@ -23,9 +24,10 @@ interface KanbanColumn {
 
 interface KanbanBoardProps {
   columns: KanbanColumn[];
+  onChangeTaskStatus?: (taskId: string, newStatus: string) => void;
 }
 
-export function KanbanBoard({ columns }: KanbanBoardProps) {
+export function KanbanBoard({ columns, onChangeTaskStatus }: KanbanBoardProps) {
   return (
     <div className="flex gap-4 overflow-x-auto pb-4 h-full">
       {columns.map((column) => (
@@ -55,6 +57,12 @@ export function KanbanBoard({ columns }: KanbanBoardProps) {
                   agentColor={item.agent?.color}
                   project={item.project}
                   timestamp={item.created_at}
+                  status={item.status}
+                  onChangeStatus={
+                    onChangeTaskStatus
+                      ? (newStatus) => onChangeTaskStatus(item.id, newStatus)
+                      : undefined
+                  }
                 />
               ))
             )}

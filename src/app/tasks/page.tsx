@@ -1,22 +1,41 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { KanbanBoard } from "@/components/kanban-board";
 import { MetricsBar } from "@/components/metrics-bar";
-import { getTasks } from "@/lib/data";
-import type { Task } from "@/lib/supabase/types";
+import { NewTaskModal } from "@/components/new-task-modal";
+import { getTasks, getAgents, getProjects, updateTask } from "@/lib/data";
+import type { Task, Agent, Project } from "@/lib/supabase/types";
 import { Plus, Loader2 } from "lucide-react";
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<(Task & { agent?: Agent | null })[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showNewModal, setShowNewModal] = useState(false);
+
+  const loadData = useCallback(async () => {
+    const [t, a, p] = await Promise.all([getTasks(), getAgents(), getProjects()]);
+    setTasks(t);
+    setAgents(a);
+    setProjects(p);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    getTasks().then((data) => {
-      setTasks(data);
-      setLoading(false);
-    });
-  }, []);
+    loadData();
+  }, [loadData]);
+
+  const handleChangeStatus = async (taskId: string, newStatus: string) => {
+    // Optimistic update
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId ? { ...t, status: newStatus as Task["status"] } : t
+      )
+    );
+    await updateTask(taskId, { status: newStatus as Task["status"] });
+  };
 
   const byStatus = (status: string) => tasks.filter((t) => t.status === status);
   const inProgress = byStatus("in_progress");
@@ -55,14 +74,29 @@ export default function TasksPage() {
             <MetricsBar metrics={metrics} />
           </div>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors">
+        <button
+          onClick={() => setShowNewModal(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors"
+        >
           <Plus className="w-4 h-4" />
           New Task
         </button>
       </div>
       <div className="flex-1 min-h-0">
-        <KanbanBoard columns={columns} />
+        <KanbanBoard columns={columns} onChangeTaskStatus={handleChangeStatus} />
       </div>
+
+      {showNewModal && (
+        <NewTaskModal
+          agents={agents}
+          projects={projects}
+          onClose={() => setShowNewModal(false)}
+          onCreated={() => {
+            setShowNewModal(false);
+            loadData();
+          }}
+        />
+      )}
     </div>
   );
 }
